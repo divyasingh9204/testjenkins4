@@ -1,66 +1,49 @@
-def changeRequestNumber = "null"
-def stageName = "STAGE"
-def ciPipelineName = "CI_Pipeline"
-def currStageName = "none"
+def artifactname = "sp-boot-app.jar"
+def repoName = "sp-boot-app-repo"
+def pipelineName = "devops_vk_pipeline"
+def semanticVersion = "${env.BUILD_NUMBER}.0.0"
+def packageName = "spboot-package_${env.BUILD_NUMBER}"
+def version = "${env.BUILD_NUMBER}.0"
+def pkgName = "sp-boot-package"
+def changeRequestId = "testId"
 pipeline {
-    agent any
+  agent any
+  stages {
+       stage('Build') {
+           steps {
+              echo 'build'
 
-    stages {
-        stage('Build') {
-            steps {
-                script{
-                    currStageName = "Build"
-                }
-                echo '${currStageName} - START'
-                echo '${currStageName} - END'                
-            }
-        }
-        stage('Create_Change') {
-            steps {
-                script{
-                    currStageName = "Create_Change"
-                }
-                echo "${currStageName} Step - START"
-                echo "changeRequestNumber before snDevOpsChange() - ${changeRequestNumber}, stageName - ${currStageName}"
-                snDevOpsStep()
-                snDevOpsChange()
-                echo "${currStageName} Step - END"
-                echo "changeRequestNumber after snDevOpsChange() but unassigned to snDevOpsGetChangeNumber() - ${changeRequestNumber}, stageName - ${currStageName}"
-            }
-        }
+           }
+       }
+       stage('Test') {
+           steps {
+              echo 'Test'
+           }
+       }
+      stage('Deploy') {
+           steps {
+              snDevOpsStep()
+              echo 'Deploying the change....$changeRequestId'
+              echo "Deploying the change....${changeRequestId}"	      
+              snDevOpsChange changeRequestDetails: '{ "attributes": { "short_description": "pkgName => ${pkgName}", "description": "changeRequestId => ${changeRequestId}"}}'
+	      script {
+	      	changeRequestId = snDevOpsGetChangeNumber()
+                echo "Inside Script Block => Deploying the change....${changeRequestId}"
+	      }
+              echo "Deploying the change....${changeRequestId}, env.BUILD_NUMBER => ${env.BUILD_NUMBER}"
+           }
+      }
+      stage('TestChange') {
+      	steps {
+		
+	      script {
+	      	changeRequestId = snDevOpsGetChangeNumber changeDetails: '{"pipeline_name":"surya-multibranch","build_number":"2","stage_name":"Deploy"}'
+		echo "Inside Script Block => Test the change....with double quotes ${changeRequestId}"
+	      }
+              echo "Deploying the change....${changeRequestId}"
+	}
+      }
 
-        stage('Get_Change') {
-            steps {
-                script{
-                    echo "Pipeline Name, Build Number, Stage Name are mandatory input parameters to retrieve the change request number. If these input field parameters are not provided, the change request number for the current Pipeline Name, Build Number, Stage Name will be retrieved. For multi-branch pipelines, you must provide the Branch Name as an input parameter as well. (starting with version 1.37)."
-                    echo "*****"
-                    echo "snDevOpsGetChangeNumber with only stage_name as input parameter"
-                    changeRequestNumber = snDevOpsGetChangeNumber(changeDetails: """{"stage_name":"${currStageName}"}""")
-                    echo "changeRequestNumber after snDevOpsGetChangeNumber() step with stage_name only parameter is - ${changeRequestNumber}"
-                }
-            }
-        }
+  }
 
-        stage('Update_Change') {
-            steps {
-                script{
-                    currStageName = "Update_Change"
-                    echo "Updating the changeDetails for changeRequestNumber ${changeRequestNumber}"
-                    snDevOpsUpdateChangeInfo(changeRequestDetails: 
-                        """{
-                            "short_description": "Short description updated to Test description in ${currStageName} Step by ${env.BUILD_NUMBER}",
-                            "priority": "1",
-                            "start_date": "2021-02-05 08:00:00",
-                            "end_date": "2022-12-25 08:00:00",
-                            "justification": "test justification",
-                            "description": "test description",
-                            "cab_required": true,
-                            "comments": "This update for comments is from jenkins file",
-                            "work_notes": "This update for work_notes is from jenkins file"
-                        }""", 
-                        changeRequestNumber: """${changeRequestNumber}""")
-                }
-            }
-        }
-    }
 }
