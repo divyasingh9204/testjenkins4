@@ -15,7 +15,7 @@ pipeline {
       stage('Deploy') {
            steps {
                    
-              snDevOpsChange changeRequestDetails: '{ "attributes": { "short_description": "pkgName => ${pkgName}", "description": "changeRequestId => ${changeRequestId}"}}'
+              snDevOpsChange()
 	  
 	}
       }
