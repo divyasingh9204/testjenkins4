@@ -1,0 +1,40 @@
+# specific branch build
+trigger:
+ - none
+pool:
+  vmImage: ubuntu-latest
+stages:
+  - stage: Build
+    jobs:
+      - job: Job_Build
+        steps:
+              - task: PublishPipelineArtifact@1
+                inputs:
+                  targetPath: '$(Pipeline.Workspace)'
+                  artifact: 'rest pipeline-agent-registration-artifact.jar'
+                  publishLocation: 'pipeline'
+                  
+  - stage: Test
+    jobs:
+      - job: 'j2'
+        steps:
+        - task: Bash@3
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Write your commands here
+              
+              echo 'Hello world'
+  # - stage: Prod
+  #   pool: server
+  #   jobs:
+  #         - job: Job_Prod
+  #           steps:
+  #             - task: ServiceNow-DevOps-Server-Change-Acceleration@1
+  #               inputs:
+  #                 connectedServiceName: 'dsingh9-TestReleasePipeline-ServiceNow DevOps Service Connection'
+  #                 UpstreamJob: 'j2'
+                  
+                  
+                  
+                  
